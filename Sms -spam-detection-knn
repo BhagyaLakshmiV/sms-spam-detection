@@ -1,0 +1,44 @@
+import pandas as pd
+import numpy as np
+from nltk.corpus import stopwords
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.model_selection import train_test_split
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.metrics import f1_score,accuracy_score
+import string
+x="/content/drive/My Drive/Project1/sms_spam.csv"
+data=pd.read_csv(x,encoding="latin-1")
+data.head(5)
+data.drop(['Unnamed: 2','Unnamed: 3','Unnamed: 4'],axis=1)
+data.rename(columns={'v1':'Class','v2':'Text'},inplace=True)
+data['numClass']=data['Class'].map({'ham':0,'spam':1})
+for i in np.arange(0,len(data.Text)):
+  data.loc[i,'count']=len(data.loc[i,'Text'])
+print("Unique values in the class set:",data.Class.unique())
+print(data.head())
+import nltk
+nltk.download('stopwords')
+def process_text(Text):
+  nopunc=[char for char in Text if char not in string.punctuation]
+  nopunc=''.join(nopunc)
+  clean_words=[word for word in nopunc.split() if word.lower() not in stopwords.words('english')]
+  return clean_words
+  message_bow=CountVectorizer(analyzer=process_text).fit_transform(data['Text'])
+print(message_bow)
+message_bow.shape
+x_train,x_test,y_train,y_test=train_test_split(message_bow,data['numClass'],test_size=0.30,random_state=None)
+print(x_train.shape[0])
+print(x_test.shape[0])
+classifier=KNeighborsClassifier(n_neighbors=5).fit(x_train,y_train)
+print(classifier.predict(x_test))
+print(y_test.values)
+print(classifier.predict(x_test))
+print(y_test.values)
+pred=classifier.predict(x_test)
+print('accuracy:',accuracy_score(y_test,pred))
+from sklearn.metrics import classification_report,accuracy_score
+pred=classifier.predict(x_train)
+print(classification_report(y_train,pred))
+from sklearn.metrics import classification_report,accuracy_score
+pred=classifier.predict(x_test)
+print(classification_report(y_test,pred))
